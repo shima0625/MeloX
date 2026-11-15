@@ -2188,7 +2188,7 @@
 "ui.qqmusic.sign_in.web.subtitle" = "在官方网站扫描QQ或微信二维码";
 "ui.qqmusic.sign_in.cookie" = "粘贴 Cookie";
 "ui.qqmusic.sign_in.cookie.subtitle" = "使用已登录浏览器中复制的 Cookie";
-"ui.qqmusic.sign_in.footer" = "MeloX talks to QQ Music directly with the login you store here. Nothing is sent to Pickle's servers.";
+"ui.qqmusic.sign_in.footer" = "MeloX 使用你在此保存的登录信息直接访问QQ音乐，登录信息只保存在本设备上。";
 "ui.qqmusic.sign_out" = "退出登录";
 "ui.qqmusic.sign_out.confirm.title" = "要退出QQ音乐吗？";
 "ui.qqmusic.sign_out.confirm.message" = "将从此设备删除保存的QQ音乐 Cookie。已下载和缓存的音乐会保留。";

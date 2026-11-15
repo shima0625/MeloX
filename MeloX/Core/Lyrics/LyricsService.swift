@@ -188,10 +188,17 @@ final class LyricsService {
         var sources = LyricSourceCollection()
         switch track.source {
         case .qqMusic:
-            sources.qqMusic = try await qqMusicClient.lyrics(
+            // The direct song-mid lookup is exact, but QQ sometimes answers it
+            // with an empty document. Fall back to the metadata match so the
+            // song still gets lyrics instead of nothing.
+            if let direct = try? await qqMusicClient.lyrics(
                 forProviderTrack: track,
                 song: song
-            )
+            ) {
+                sources.qqMusic = direct
+            } else {
+                sources.qqMusic = try await qqMusicClient.lyrics(for: song)
+            }
         case .netease:
             break
         }

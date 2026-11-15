@@ -2188,7 +2188,7 @@
 "ui.qqmusic.sign_in.web.subtitle" = "公式サイトのQQ・WeChatのQRコードを読み取ります";
 "ui.qqmusic.sign_in.cookie" = "Cookieを貼り付け";
 "ui.qqmusic.sign_in.cookie.subtitle" = "ログイン済みブラウザでコピーしたCookieを使います";
-"ui.qqmusic.sign_in.footer" = "MeloX talks to QQ Music directly with the login you store here. Nothing is sent to Pickle's servers.";
+"ui.qqmusic.sign_in.footer" = "MeloXはここに保存したログイン情報でQQミュージックへ直接接続し、ログイン情報はこの端末にのみ保存されます。";
 "ui.qqmusic.sign_out" = "ログアウト";
 "ui.qqmusic.sign_out.confirm.title" = "QQミュージックからログアウトしますか？";
 "ui.qqmusic.sign_out.confirm.message" = "保存したQQミュージックのCookieをこの端末から削除します。ダウンロード済みの音楽は残ります。";

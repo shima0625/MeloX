@@ -2188,7 +2188,7 @@
 "ui.qqmusic.sign_in.web.subtitle" = "Scan the QQ or WeChat QR code on the official site";
 "ui.qqmusic.sign_in.cookie" = "Paste Cookie";
 "ui.qqmusic.sign_in.cookie.subtitle" = "Use a cookie header copied from a signed-in browser";
-"ui.qqmusic.sign_in.footer" = "MeloX talks to QQ Music directly with the login you store here. Nothing is sent to Pickle's servers.";
+"ui.qqmusic.sign_in.footer" = "MeloX talks to QQ Music directly with the login you store here, and the login stays on this device.";
 "ui.qqmusic.sign_out" = "Sign Out";
 "ui.qqmusic.sign_out.confirm.title" = "Sign out of QQ Music?";
 "ui.qqmusic.sign_out.confirm.message" = "The saved QQ Music cookie is removed from this device. Downloaded and cached music is not affected.";
