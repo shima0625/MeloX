@@ -52,20 +52,29 @@ nonisolated enum MusicSourceProviderError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured(let kind):
-            L10n.format("ui.error.source.not_configured", kind.title)
+            return L10n.format(
+                "ui.error.source.not_configured",
+                kind.title
+            )
         case .loginRequired(let kind):
-            L10n.format("ui.error.source.login_required", kind.title)
+            return L10n.format(
+                "ui.error.source.login_required",
+                kind.title
+            )
         case .notFound:
-            L10n.string("ui.error.source.not_found")
+            return L10n.string("ui.error.source.not_found")
         case .invalidResponse:
-            L10n.string("ui.error.source.invalid_response")
+            return L10n.string("ui.error.source.invalid_response")
         case .unavailable(let reason):
-            reason
+            return reason
         case .playbackDenied(let kind, let detail):
             if let detail, !detail.isEmpty {
                 return detail
             }
-            return L10n.format("ui.error.source.playback_denied", kind.title)
+            return L10n.format(
+                "ui.error.source.playback_denied",
+                kind.title
+            )
         }
     }
 }
