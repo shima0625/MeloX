@@ -4,6 +4,7 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case system
     case english
     case simplifiedChinese
+    case japanese
 
     static let storageKey = "melox.localization.language"
 
@@ -17,6 +18,8 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
             Locale(identifier: "en")
         case .simplifiedChinese:
             Locale(identifier: "zh-Hans")
+        case .japanese:
+            Locale(identifier: "ja")
         }
     }
 
@@ -28,6 +31,8 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
             L10n.string("ui.settings.language.option.english")
         case .simplifiedChinese:
             L10n.string("ui.settings.language.option.simplified_chinese")
+        case .japanese:
+            L10n.string("ui.settings.language.option.japanese")
         }
     }
 

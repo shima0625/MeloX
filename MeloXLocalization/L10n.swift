@@ -23,10 +23,12 @@ nonisolated enum L10n {
     private static let supportedLocales = [
         Locale(identifier: "en"),
         Locale(identifier: "zh-Hans"),
+        Locale(identifier: "ja"),
     ]
 
     private static let englishBundle = localizedBundle(named: "en")
     private static let simplifiedChineseBundle = localizedBundle(named: "zh-Hans")
+    private static let japaneseBundle = localizedBundle(named: "ja")
 
     static var locale: Locale {
         languageState.current.locale
@@ -146,9 +148,14 @@ nonisolated enum L10n {
     }
 
     private static func bundle(for locale: Locale) -> Bundle {
-        locale.language.languageCode?.identifier == "zh"
-            ? simplifiedChineseBundle
-            : englishBundle
+        switch locale.language.languageCode?.identifier {
+        case "zh":
+            return simplifiedChineseBundle
+        case "ja":
+            return japaneseBundle
+        default:
+            return englishBundle
+        }
     }
 
     private static func localizedBundle(named localization: String) -> Bundle {

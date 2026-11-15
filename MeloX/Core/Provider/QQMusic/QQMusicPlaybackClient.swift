@@ -129,7 +129,7 @@ nonisolated final class QQMusicPlaybackClient: @unchecked Sendable {
         return PlaybackSource(
             url: url,
             bitrate: candidate.bitrate,
-            format: candidate.fileExtension,
+            format: candidate.fileExtension.rawValue,
             quality: candidate.actualQuality
         )
     }
