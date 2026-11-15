@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build-ios:
     name: Build MeloX-iOS-unsigned.ipa
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
 
     steps:
