@@ -153,7 +153,6 @@ struct TabletMiniPlayerView: View {
                 ),
                 in: 0...duration(for: song)
             )
-            .sliderThumbVisibility(.hidden)
             .tint(.primary)
             .accessibilityLabel("ui.player.progress")
 

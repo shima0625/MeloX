@@ -17,18 +17,9 @@ struct SkylineLyricsView: View {
 
     var body: some View {
         Group {
-            if #available(iOS 27.1, *) {
-                ArrangementView {
-                    focusedLyrics
-                } secondary: {
-                    ambientLyrics
-                }
-                .arrangementViewStyle(.overlay)
-            } else {
-                ZStack {
-                    ambientLyrics
-                    focusedLyrics
-                }
+            ZStack {
+                ambientLyrics
+                focusedLyrics
             }
         }
         .background {

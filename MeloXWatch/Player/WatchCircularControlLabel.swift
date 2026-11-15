@@ -6,26 +6,17 @@ struct WatchCircularControlLabel: View {
     var iconScale: CGFloat = 0.45
 
     var body: some View {
-        if #available(watchOS 26.0, *) {
-            symbol
-                .frame(width: size, height: size)
-                .glassEffect(
-                    .regular.interactive(),
-                    in: .circle
+        ZStack {
+            Circle()
+                .fill(Color(white: 0.10))
+            Circle()
+                .stroke(
+                    Color.white.opacity(0.14),
+                    lineWidth: 1.5
                 )
-        } else {
-            ZStack {
-                Circle()
-                    .fill(Color(white: 0.10))
-                Circle()
-                    .stroke(
-                        Color.white.opacity(0.14),
-                        lineWidth: 1.5
-                    )
-                symbol
-            }
-            .frame(width: size, height: size)
+            symbol
         }
+        .frame(width: size, height: size)
     }
 
     private var symbol: some View {

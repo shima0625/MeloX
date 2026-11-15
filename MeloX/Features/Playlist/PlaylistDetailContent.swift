@@ -361,7 +361,8 @@ struct MusicCollectionPrimaryActions: View {
     @Environment(\.musicCollectionDetailMetrics) private var detailMetrics
 
     var body: some View {
-        GlassEffectContainer(spacing: detailMetrics.usesAdaptiveHeader ? 10 : 14) {
+        // iOS 18 has no glass merging container; the buttons keep their own shapes.
+        Group {
             HStack(spacing: detailMetrics.usesAdaptiveHeader ? 10 : 14) {
                 Button {
                     Task {
@@ -379,7 +380,7 @@ struct MusicCollectionPrimaryActions: View {
                         .font(.title2.weight(.semibold))
                         .frame(width: 30, height: 30)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.bordered)
                 .buttonBorderShape(.circle)
                 .controlSize(detailMetrics.usesAdaptiveHeader ? .regular : .large)
                 .disabled(tracks.isEmpty || isPreparingPlayback)
@@ -410,7 +411,7 @@ struct MusicCollectionPrimaryActions: View {
                     .font(detailMetrics.usesAdaptiveHeader ? .body.weight(.semibold) : .title3.weight(.bold))
                     .frame(minWidth: detailMetrics.usesAdaptiveHeader ? 76 : 116, minHeight: 30)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .controlSize(detailMetrics.usesAdaptiveHeader ? .regular : .large)
                 .tint(primaryActionBackground)
@@ -424,7 +425,7 @@ struct MusicCollectionPrimaryActions: View {
                     .font(.title2.weight(.semibold))
                     .frame(width: 30, height: 30)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.bordered)
                 .buttonBorderShape(.circle)
                 .controlSize(detailMetrics.usesAdaptiveHeader ? .regular : .large)
                 .accessibilityLabel(

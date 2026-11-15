@@ -6,18 +6,14 @@ struct NeteaseLoginView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(LibraryStore.self) private var library
 
-    @State private var page: WebPage
-
-    init() {
-        _page = State(initialValue: NeteaseWebCookieStore.makePage())
-    }
+    @State private var isLoading = false
+    @State private var progress = 0.0
 
     var body: some View {
-        WebView(page)
-            .webViewBackForwardNavigationGestures(.enabled)
+        NeteaseLoginWebView(isLoading: $isLoading, progress: $progress)
             .overlay(alignment: .top) {
-                if page.isLoading {
-                    ProgressView(value: page.estimatedProgress)
+                if isLoading {
+                    ProgressView(value: progress)
                         .progressViewStyle(.linear)
                 }
             }
@@ -31,7 +27,6 @@ struct NeteaseLoginView: View {
                 }
             }
             .task {
-                _ = page.load(URL(string: "https://music.163.com/#"))
                 await waitForAuthenticatedCookie()
             }
     }
@@ -54,15 +49,78 @@ struct NeteaseLoginView: View {
     }
 }
 
+/// iOS 18-compatible WebKit host. `WebPage`/`WebView` are iOS 26 API, so the
+/// login sheet uses `WKWebView` directly and reports its load progress.
+struct NeteaseLoginWebView: UIViewRepresentable {
+    @Binding var isLoading: Bool
+    @Binding var progress: Double
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView(
+            frame: .zero,
+            configuration: NeteaseWebCookieStore.makeConfiguration()
+        )
+        webView.allowsBackForwardNavigationGestures = true
+        webView.navigationDelegate = context.coordinator
+        context.coordinator.observe(webView)
+        if let url = URL(string: "https://music.163.com/#") {
+            webView.load(URLRequest(url: url))
+        }
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        coordinator.stopObserving()
+        uiView.navigationDelegate = nil
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        private var parent: NeteaseLoginWebView
+        private var observations: [NSKeyValueObservation] = []
+
+        init(_ parent: NeteaseLoginWebView) {
+            self.parent = parent
+        }
+
+        func observe(_ webView: WKWebView) {
+            observations = [
+                webView.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
+                    let value = webView.estimatedProgress
+                    Task { @MainActor in
+                        self?.parent.progress = value
+                    }
+                },
+                webView.observe(\.isLoading, options: [.new]) { [weak self] webView, _ in
+                    let value = webView.isLoading
+                    Task { @MainActor in
+                        self?.parent.isLoading = value
+                    }
+                },
+            ]
+        }
+
+        func stopObserving() {
+            observations.forEach { $0.invalidate() }
+            observations = []
+        }
+    }
+}
+
 @MainActor
 enum NeteaseWebCookieStore {
     private static let dataStore = WKWebsiteDataStore.default()
 
-    static func makePage() -> WebPage {
-        var configuration = WebPage.Configuration()
+    static func makeConfiguration() -> WKWebViewConfiguration {
+        let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
-        configuration.defaultNavigationPreferences.preferredContentMode = .desktop
-        return WebPage(configuration: configuration)
+        configuration.defaultWebpagePreferences.preferredContentMode = .desktop
+        return configuration
     }
 
     static func authenticatedCookieHeader() async -> String? {

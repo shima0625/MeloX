@@ -412,7 +412,6 @@ struct PlaylistDetailView: View {
             .accessibilityLabel("ui.common.more")
             .accessibilityIdentifier("collection-toolbar-more")
         }
-        .sharedBackgroundVisibility(.visible)
     }
 
     @ToolbarContentBuilder

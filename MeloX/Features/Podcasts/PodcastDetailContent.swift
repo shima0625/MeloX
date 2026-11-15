@@ -194,14 +194,15 @@ private struct PodcastPrimaryActions: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        GlassEffectContainer(spacing: 14) {
+        // iOS 18 has no glass merging container; the buttons keep their own shapes.
+        Group {
             HStack(spacing: 14) {
                 Button(action: onPlay) {
                     Label("ui.common.play", systemImage: "play.fill")
                         .font(.title3.weight(.bold))
                         .frame(minWidth: 116)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .controlSize(.large)
                 .tint(primaryActionBackground)
@@ -225,7 +226,7 @@ private struct PodcastPrimaryActions: View {
                     }
                     .frame(width: 30, height: 30)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.bordered)
                 .buttonBorderShape(.circle)
                 .controlSize(.large)
                 .disabled(isSubscribing)

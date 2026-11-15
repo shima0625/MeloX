@@ -14,18 +14,9 @@ struct TextPVFullScreenPlayerView: View {
 
     var body: some View {
         Group {
-            if #available(iOS 27.1, *) {
-                ArrangementView {
-                    chrome
-                } secondary: {
-                    lyricsContent
-                }
-                .arrangementViewStyle(.overlay)
-            } else {
-                ZStack {
-                    lyricsContent
-                    chrome
-                }
+            ZStack {
+                lyricsContent
+                chrome
             }
         }
         .background {

@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MiniPlayerView: View {
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
-    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
     @Environment(PlayerStore.self) private var player
 
     let artworkTransitionID: String
@@ -103,8 +102,10 @@ struct MiniPlayerView: View {
         }
     }
 
+    /// iOS 26 could place the accessory inline inside the tab bar; the iOS 18
+    /// layout is always the regular one.
     private var isInline: Bool {
-        placement == .inline
+        false
     }
 
     private var artworkSize: CGFloat {

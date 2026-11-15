@@ -346,27 +346,38 @@ struct ContentView: View {
         }
     }
 
-    @ViewBuilder
     private var playerAwareTabView: some View {
-        if player.currentSong != nil {
-            if #available(iOS 26.1, *) {
-                tabs
-                    .tabViewBottomAccessory(
-                        isEnabled: !isTabViewBottomAccessorySuppressed
-                    ) {
-                        miniPlayer
-                    }
-            } else {
-                tabs
-                    .tabViewBottomAccessory {
-                        if !isTabViewBottomAccessorySuppressed {
-                            miniPlayer
-                        }
-                    }
+        tabs
+    }
+
+    /// iOS 18 replacement for the iOS 26 tab-view bottom accessory: the mini
+    /// player is pinned above the tab bar of every tab instead.
+    @ViewBuilder
+    private func pageContent(for tab: AppTab) -> some View {
+        tabNavigationStack(for: tab)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if player.currentSong != nil,
+                   !isTabViewBottomAccessorySuppressed {
+                    miniPlayerBar
+                }
             }
-        } else {
-            tabs
-        }
+    }
+
+    private var miniPlayerBar: some View {
+        miniPlayer
+            .padding(4)
+            .background(
+                .ultraThinMaterial,
+                in: .rect(cornerRadius: 18, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(.white.opacity(0.14), lineWidth: 0.6)
+            }
+            .shadow(color: .black.opacity(0.18), radius: 10, y: 3)
+            .padding(.horizontal, 12)
+            .padding(.top, 4)
+            .padding(.bottom, 6)
     }
 
     @ViewBuilder
@@ -425,7 +436,7 @@ struct ContentView: View {
                     value: tab,
                     role: tab == .search ? .search : nil
                 ) {
-                    tabNavigationStack(for: tab)
+                    pageContent(for: tab)
                 }
             }
 
@@ -434,7 +445,7 @@ struct ContentView: View {
                     TabSection("ui.navigation.explore") {
                         ForEach(sidebarHomeTabs) { tab in
                             Tab(tab.title, systemImage: tab.systemImage, value: tab) {
-                                tabNavigationStack(for: tab)
+                                pageContent(for: tab)
                             }
                         }
                     }
@@ -449,7 +460,7 @@ struct ContentView: View {
                                 systemImage: tab.systemImage,
                                 value: tab
                             ) {
-                                tabNavigationStack(for: tab)
+                                pageContent(for: tab)
                             }
                         }
                     }
@@ -476,7 +487,6 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }
-        .tabBarMinimizeBehavior(usesTabletNavigation ? .never : .onScrollDown)
         .environment(\.musicUsesSidebar, usesTabletNavigation)
         .environment(\.musicNavigationNamespace, musicNavigationNamespace)
     }
