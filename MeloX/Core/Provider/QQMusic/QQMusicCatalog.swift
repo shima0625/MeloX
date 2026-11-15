@@ -120,11 +120,14 @@ nonisolated final class QQMusicCatalog: @unchecked Sendable {
         )
     }
 
+    /// The account's own playlists. `uin` must travel as a JSON string:
+    /// sending it as a number makes the gateway answer `code: 10006` with no
+    /// playlists at all.
     func userPlaylists(uin: String) async throws -> [String: Any] {
         try await api.request(
             module: "music.musicasset.PlaylistBaseRead",
             method: "GetPlaylistByUin",
-            param: ["uin": Int64(uin) ?? 0]
+            param: ["uin": uin]
         )
     }
 

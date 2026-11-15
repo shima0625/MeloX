@@ -111,7 +111,13 @@ final class QQMusicStore {
     private(set) var rankings: [Playlist] = []
     private(set) var recommendedPlaylists: [Playlist] = []
     private(set) var isLoadingLibrary = false
+    /// Account-level problem (a rejected cookie, a failed profile refresh).
     private(set) var libraryError: String?
+    /// One error per library section: a failing source endpoint must not
+    /// blank out the screens that load fine.
+    private(set) var myPlaylistsError: String?
+    private(set) var recommendedError: String?
+    private(set) var rankingsError: String?
     private(set) var isSigningIn = false
 
     init(provider: QQMusicProvider = QQMusicProvider()) {
@@ -156,6 +162,9 @@ final class QQMusicStore {
         rankings = []
         recommendedPlaylists = []
         libraryError = nil
+        myPlaylistsError = nil
+        recommendedError = nil
+        rankingsError = nil
     }
 
     func loadProfile() async {
@@ -173,34 +182,64 @@ final class QQMusicStore {
 
     // MARK: Library
 
+    /// Loads the three library sections independently: each keeps its own
+    /// error, so one failing endpoint (the account playlists, the recommended
+    /// feed, the rankings) leaves the other screens usable.
     func loadLibrary(force: Bool = false) async {
         refreshSession()
         guard session.isLoggedIn else { return }
-        guard force || myPlaylists.isEmpty || rankings.isEmpty else {
+        let needsPlaylists = force || myPlaylists.isEmpty
+        let needsRankings = force || rankings.isEmpty
+        let needsRecommended = force || recommendedPlaylists.isEmpty
+        guard needsPlaylists || needsRankings || needsRecommended else {
             return
         }
         isLoadingLibrary = true
-        libraryError = nil
         defer { isLoadingLibrary = false }
 
+        async let playlists: Void = loadMyPlaylists(refresh: needsPlaylists)
+        async let rankingList: Void = loadRankings(refresh: needsRankings)
+        async let recommended: Void = loadRecommended(
+            refresh: needsRecommended
+        )
+        await playlists
+        await rankingList
+        await recommended
+    }
+
+    private func loadMyPlaylists(refresh: Bool) async {
+        guard refresh else { return }
         do {
-            async let userPlaylists = provider.userPlaylists()
-            async let rankingList = provider.rankings()
-            let (playlists, rankingsResult) = try await (
-                userPlaylists,
-                rankingList
-            )
-            myPlaylists = playlists
-            rankings = rankingsResult
+            myPlaylists = try await provider.userPlaylists()
+            myPlaylistsError = nil
         } catch is CancellationError {
             return
         } catch {
-            libraryError = error.localizedDescription
+            myPlaylistsError = error.localizedDescription
         }
+    }
 
-        if recommendedPlaylists.isEmpty {
-            recommendedPlaylists =
-                (try? await provider.recommendedPlaylists()) ?? []
+    private func loadRankings(refresh: Bool) async {
+        guard refresh else { return }
+        do {
+            rankings = try await provider.rankings()
+            rankingsError = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            rankingsError = error.localizedDescription
+        }
+    }
+
+    private func loadRecommended(refresh: Bool) async {
+        guard refresh else { return }
+        do {
+            recommendedPlaylists = try await provider.recommendedPlaylists()
+            recommendedError = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            recommendedError = error.localizedDescription
         }
     }
 
