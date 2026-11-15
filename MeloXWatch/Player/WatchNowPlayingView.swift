@@ -119,13 +119,7 @@ struct WatchNowPlayingView: View {
 
     @ViewBuilder
     private func transportControls(metrics: Metrics) -> some View {
-        if #available(watchOS 26.0, *) {
-            GlassEffectContainer(spacing: 10) {
-                transportButtons(metrics: metrics)
-            }
-        } else {
-            transportButtons(metrics: metrics)
-        }
+        transportButtons(metrics: metrics)
     }
 
     private func transportButtons(metrics: Metrics) -> some View {
@@ -186,28 +180,17 @@ struct WatchNowPlayingView: View {
 
     @ViewBuilder
     private func primaryPlaybackControl(size: CGFloat) -> some View {
-        if #available(watchOS 26.0, *) {
-            playbackSymbol(size: size)
-                .frame(width: size, height: size)
-                .glassEffect(
-                    .regular
-                        .tint(.white.opacity(0.08))
-                        .interactive(),
-                    in: .circle
+        ZStack {
+            Circle()
+                .fill(Color(white: 0.15))
+            Circle()
+                .stroke(
+                    Color.white.opacity(0.18),
+                    lineWidth: 2
                 )
-        } else {
-            ZStack {
-                Circle()
-                    .fill(Color(white: 0.15))
-                Circle()
-                    .stroke(
-                        Color.white.opacity(0.18),
-                        lineWidth: 2
-                    )
-                playbackSymbol(size: size)
-            }
-            .frame(width: size, height: size)
+            playbackSymbol(size: size)
         }
+        .frame(width: size, height: size)
     }
 
     @ViewBuilder

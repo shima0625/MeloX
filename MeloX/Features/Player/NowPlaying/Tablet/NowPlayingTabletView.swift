@@ -7,7 +7,6 @@ struct NowPlayingTabletView: View {
     @Binding var page: NowPlayingPage
     let pageTransition: NowPlayingTransitionCoordinator
     let song: Song
-    let hasDisplayDivision: Bool
     let lyrics: [LyricLine]
     let lyricError: String?
     let highlightedLyricID: LyricLine.ID?
@@ -18,29 +17,14 @@ struct NowPlayingTabletView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            if #available(iOS 27.1, *), hasDisplayDivision {
-                NowPlayingAdaptiveView(
-                    page: $page,
-                    pageTransition: pageTransition,
-                    song: song,
-                    lyrics: lyrics,
-                    lyricError: lyricError,
-                    highlightedLyricID: highlightedLyricID,
-                    artworkNamespace: artworkNamespace,
-                    onDismiss: onDismiss,
-                    onExpandLyrics: onExpandLyrics,
-                    onLyricsContentPrepared: onLyricsContentPrepared
-                )
-            } else {
-                GeometryReader { proxy in
-                    let layout = NowPlayingTabletLayout(viewport: proxy.size)
+            GeometryReader { proxy in
+                let layout = NowPlayingTabletLayout(viewport: proxy.size)
 
-                    standardPlayer(layout: layout)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .clipped()
-                }
-                .transition(.opacity)
+                standardPlayer(layout: layout)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .clipped()
             }
+            .transition(.opacity)
         }
     }
 
@@ -90,7 +74,7 @@ struct NowPlayingTabletView: View {
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.clear.interactive(), in: .circle)
+                .meloxGlassSurface(.circle)
                 .accessibilityLabel("ui.player.collapse")
                 .accessibilityIdentifier("tablet-player-collapse")
 
@@ -100,7 +84,8 @@ struct NowPlayingTabletView: View {
 
             Spacer(minLength: 0)
 
-            GlassEffectContainer(spacing: 12) {
+            // iOS 18 has no glass merging container; the buttons keep their own shapes.
+            Group {
                 HStack(spacing: 12) {
                     FloatingLyricsButton()
 
@@ -119,7 +104,7 @@ struct NowPlayingTabletView: View {
                                     .frame(width: 44, height: 44)
                             }
                             .buttonStyle(.plain)
-                            .glassEffect(.clear.interactive(), in: .circle)
+                            .meloxGlassSurface(.circle)
                             .accessibilityLabel(
                                 settings.lyricsStyle == .textPV
                                     ? L10n.string("ui.settings.lyrics.style.text_pv")

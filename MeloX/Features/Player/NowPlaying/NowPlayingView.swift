@@ -22,7 +22,6 @@ struct NowPlayingView: View {
     @State private var queueSongHeaderOffset: CGFloat = 0
     @State private var artworkPageFrame = CGRect.zero
     @State private var preparedLyricsSongID: Song.ID?
-    @State private var hasDisplayDivision = false
     @State private var viewportSize = CGSize.zero
     @State private var showsFullScreenLyrics = false
     @Namespace private var pageArtworkNamespace
@@ -66,7 +65,6 @@ struct NowPlayingView: View {
                             page: pageSelection,
                             pageTransition: pageTransition,
                             song: song,
-                            hasDisplayDivision: hasDisplayDivision,
                             lyrics: lyrics,
                             lyricError: lyricError,
                             highlightedLyricID: highlightedLyricID,
@@ -142,16 +140,6 @@ struct NowPlayingView: View {
             proxy.size
         } action: { size in
             viewportSize = size
-        }
-        .onGeometryChange(for: Bool.self) { proxy in
-            if #available(iOS 27.1, *) {
-                // Keep the inner-display layout stable while the fold flattens.
-                !proxy.reservedRegions(kind: .division, options: .includeInactive).isEmpty
-            } else {
-                false
-            }
-        } action: { hasDivision in
-            hasDisplayDivision = hasDivision
         }
         .background {
             NowPlayingLyricSynchronizer(
@@ -460,10 +448,9 @@ struct NowPlayingView: View {
     }
 
     private var usesExpandedLayout: Bool {
-        hasDisplayDivision
-            || (viewportSize.width >= 700
+        viewportSize.width >= 700
                 && viewportSize.height >= 500
-                && (UIDevice.current.userInterfaceIdiom == .pad || horizontalSizeClass == .regular))
+                && (UIDevice.current.userInterfaceIdiom == .pad || horizontalSizeClass == .regular)
     }
 
     private var usesMonochromeLyricsBackground: Bool {

@@ -62,18 +62,10 @@ nonisolated private struct LyricAttributeScope: AttributeScope {
     let swiftUI: AttributeScopes.SwiftUIAttributes
 }
 
-@available(iOS 26, macOS 26, *)
-private struct LyricTextFormatting: AttributedTextFormattingDefinition {
-    var body: some AttributedTextFormattingDefinition<LyricAttributeScope> {}
-}
-
 extension View {
-    @ViewBuilder
+    /// iOS 18 has no `AttributedTextFormattingDefinition`, so the lyric runs
+    /// rely on the attributes already carried by the attributed string.
     func lyricTextAttributes() -> some View {
-        if #available(iOS 26, macOS 26, *) {
-            attributedTextFormattingDefinition(LyricTextFormatting())
-        } else {
-            self
-        }
+        self
     }
 }
