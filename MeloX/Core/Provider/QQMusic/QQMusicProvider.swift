@@ -425,8 +425,9 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
         guard let identifier = mid ?? numeric, !identifier.isEmpty else {
             return nil
         }
-        let artists = (QQMusicJSON.objects(item["singer"])
-            + QQMusicJSON.objects(item["singers"]))
+        var artists = (QQMusicJSON.objects(item["singer"])
+            + QQMusicJSON.objects(item["singers"])
+            + QQMusicJSON.objects(item["singer_list"]))
             .compactMap { singer -> Artist? in
                 guard let name = QQMusicJSON.firstString(
                     singer,
@@ -434,7 +435,7 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
                 ) else { return nil }
                 let singerMid = QQMusicJSON.firstString(
                     singer,
-                    ["mid", "singerMid"]
+                    ["mid", "singerMid", "singerMID", "singer_id"]
                 )
                 return Artist(
                     id: singerMid.map {
@@ -449,6 +450,26 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
                     name: name
                 )
             }
+        // Album search cards carry a plain "周杰伦" string instead of objects.
+        if artists.isEmpty,
+           let artistText = QQMusicJSON.firstString(
+               item,
+               ["singer", "author", "singerName"]
+           ) {
+            artists = artistText
+                .components(separatedBy: CharacterSet(charactersIn: "/&、"))
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+                .map { name in
+                    Artist(
+                        id: ProviderTrackReference.syntheticID(
+                            for: .qqMusic,
+                            mid: "artist:\(name)"
+                        ),
+                        name: name
+                    )
+                }
+        }
         let album = Album(
             id: ProviderTrackReference.syntheticID(
                 for: .qqMusic,
@@ -461,7 +482,7 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
             picURL: mid.map(albumArtworkURLString(mid:))
                 ?? QQMusicJSON.firstString(
                     item,
-                    ["picurl", "picUrl", "cover"]
+                    ["picurl", "picUrl", "pic", "cover"]
                 ).map(QQMusicJSON.secureURLString),
             artists: artists,
             size: QQMusicJSON.firstInt(
@@ -506,7 +527,11 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
         return Artist(
             id: identifier,
             name: name,
-            avatarURL: artistArtworkURLString(mid: mid)
+            avatarURL: QQMusicJSON.firstString(
+                item,
+                ["singerPic", "singerPicUrl", "pic", "picUrl", "avatar"]
+            ).map(QQMusicJSON.secureURLString)
+                ?? artistArtworkURLString(mid: mid)
         )
     }
 

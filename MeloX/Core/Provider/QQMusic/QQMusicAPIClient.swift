@@ -271,6 +271,74 @@ nonisolated final class QQMusicAPIClient: @unchecked Sendable {
         return root
     }
 
+    /// The mobile search gateway. Typed search (albums, artists, playlists)
+    /// and the song-search fallback only answer this shape: a top-level result
+    /// key instead of `req_0`, `ct 11` / `v 20080508` instead of the desktop
+    /// comm block, and the mobile client as user agent.
+    func mobileSearch(param: [String: Any]) async throws -> [String: Any] {
+        let key = "music.search.SearchCgiService.DoSearchForQQMusicMobile"
+        let body: [String: Any] = [
+            "comm": [
+                "ct": "11",
+                "v": "20080508",
+                "tmeLoginType": "0",
+                "tmeLoginMethod": "0",
+            ],
+            key: [
+                "module": "music.search.SearchCgiService",
+                "method": "DoSearchForQQMusicMobile",
+                "param": param,
+            ],
+        ]
+        guard let url = URL(string: "https://u6.y.qq.com/cgi-bin/musicu.fcg")
+        else { throw MusicSourceProviderError.invalidResponse }
+        var request = URLRequest(
+            url: url,
+            cachePolicy: .reloadIgnoringLocalCacheData,
+            timeoutInterval: 20
+        )
+        request.httpMethod = "POST"
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.setValue(
+            "application/x-www-form-urlencoded",
+            forHTTPHeaderField: "Content-Type"
+        )
+        request.setValue("*/*", forHTTPHeaderField: "Accept")
+        request.setValue(
+            "QQMusic 20080508(android)",
+            forHTTPHeaderField: "User-Agent"
+        )
+        let login = currentSession
+        if !login.cookie.isEmpty {
+            request.setValue(login.cookie, forHTTPHeaderField: "Cookie")
+        }
+        let (data, response) = try await session.data(for: request)
+        try Task.checkCancellation()
+        try Self.validate(response)
+        guard let root = try JSONSerialization.jsonObject(with: data)
+            as? [String: Any] else {
+            throw MusicSourceProviderError.invalidResponse
+        }
+        let rootCode = QQMusicJSON.int(root["code"]) ?? 0
+        guard rootCode == 0 else {
+            throw MusicSourceProviderError.unavailable(
+                L10n.format("ui.error.source.code", rootCode)
+            )
+        }
+        guard let result = QQMusicJSON.dictionary(root[key]) else {
+            throw MusicSourceProviderError.invalidResponse
+        }
+        let code = QQMusicJSON.int(result["code"]) ?? 0
+        guard code == 0 else {
+            let message = QQMusicJSON.firstString(
+                result,
+                ["message", "msg"]
+            ) ?? L10n.format("ui.error.source.code", code)
+            throw MusicSourceProviderError.unavailable(message)
+        }
+        return QQMusicJSON.dictionary(result["data"]) ?? [:]
+    }
+
     func get(
         url: URL,
         userAgent: String = QQMusicAPIClient.desktopUserAgent,

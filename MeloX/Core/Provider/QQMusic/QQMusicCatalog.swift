@@ -11,32 +11,36 @@ nonisolated final class QQMusicCatalog: @unchecked Sendable {
 
     // MARK: Search
 
-    /// Typed search (songs / albums / artists / playlists).
+    /// Typed search (songs / albums / artists / playlists) through the mobile
+    /// search gateway, which is the only profile that answers every type.
     func search(
         query: String,
         type: Int,
         page: Int,
         pageSize: Int
     ) async throws -> [String: Any] {
-        let searchID = "\(Int(Date().timeIntervalSince1970 * 1_000))"
-            + "\(Int.random(in: 1_000...9_999))"
-            + "\(Int.random(in: 0...999))"
+        let start = max(page - 1, 0) * pageSize
         let param: [String: Any] = [
-            "searchid": searchID,
             "query": query,
+            "highlight": 0,
+            "searchid": "",
+            "sub_searchid": 0,
             "search_type": type,
-            "num_per_page": pageSize,
+            "nqc_flag": 0,
+            "sin": start,
+            "ein": start + pageSize,
             "page_num": page,
-            "highlight": false,
-            "grp": true,
-            "selectors": [String: Any](),
-            "vec_selectors": [Any](),
+            "num_per_page": pageSize,
+            "cat": 2,
+            "grp": 1,
+            "remoteplace": "",
+            "from": "",
+            "multi_zhida": 1,
+            "sem": 0,
+            "related_data": "",
+            "ambi_data": "",
         ]
-        return try await api.request(
-            module: "music.search.SearchCgiService",
-            method: "DoSearchForQQMusicMobile",
-            param: param
-        )
+        return try await api.mobileSearch(param: param)
     }
 
     /// Song search. The desktop profile returns richer cards, the mobile
@@ -81,8 +85,9 @@ nonisolated final class QQMusicCatalog: @unchecked Sendable {
            !QQMusicJSON.objects(list).isEmpty {
             return QQMusicJSON.objects(list)
         }
-        if let items = body?["item_song"] {
-            return QQMusicJSON.objects(items)
+        let items = QQMusicJSON.objects(body?["item_song"])
+        if !items.isEmpty {
+            return items
         }
         return []
     }
