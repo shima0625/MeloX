@@ -69,6 +69,9 @@ final class NeteaseAPI {
         isCellularData ? settings.cellularQuality : settings.quality
     }
 
+    /// The quality tier the player should ask any source for right now.
+    var requestedPlaybackQuality: MusicQuality { playbackQuality }
+
     init(settings: AppSettings, session: URLSession = .shared) {
         self.settings = settings
         pageContentCache = PageContentCache(settings: settings)

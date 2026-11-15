@@ -38,6 +38,17 @@ final class LyricsService {
         for song: LyricsSongMetadata,
         onUpdate: @MainActor (ResolvedLyrics) -> Void
     ) async throws -> ResolvedLyrics {
+        // Third-party catalog tracks are addressed by their own provider id,
+        // so their QRC document is fetched directly instead of going through
+        // the NetEase-first automatic pipeline.
+        if let providerTrack = song.providerTrack {
+            return try await loadProviderTrack(
+                providerTrack,
+                song: song,
+                onUpdate: onUpdate
+            )
+        }
+
         let preference = settings.lyricsSourcePreference
         let usesAMLL = preference.usesSource(
             .amll,
@@ -153,6 +164,53 @@ final class LyricsService {
         }
 
         try Task.checkCancellation()
+        guard let latest else { throw LyricSourceError.noLyrics }
+        store(latest, for: cacheKey)
+        return latest
+    }
+
+    private func loadProviderTrack(
+        _ track: ProviderTrackReference,
+        song: LyricsSongMetadata,
+        onUpdate: @MainActor (ResolvedLyrics) -> Void
+    ) async throws -> ResolvedLyrics {
+        let cacheKey = CacheKey(
+            song: song,
+            preference: .qqMusic,
+            usesAMLL: false,
+            usesQQMusic: true
+        )
+        var latest = cache[cacheKey]
+        if let cached = latest {
+            onUpdate(cached)
+        }
+
+        var sources = LyricSourceCollection()
+        switch track.source {
+        case .qqMusic:
+            // The direct song-mid lookup is exact, but QQ sometimes answers it
+            // with an empty document. Fall back to the metadata match so the
+            // song still gets lyrics instead of nothing.
+            if let direct = try? await qqMusicClient.lyrics(
+                forProviderTrack: track,
+                song: song
+            ) {
+                sources.qqMusic = direct
+            } else {
+                sources.qqMusic = try await qqMusicClient.lyrics(for: song)
+            }
+        case .netease:
+            break
+        }
+        try Task.checkCancellation()
+
+        guard let resolved = LyricSourceMerger.resolve(
+            sources,
+            preference: .qqMusic
+        ) else {
+            throw LyricSourceError.noLyrics
+        }
+        publish(resolved, into: &latest, onUpdate: onUpdate)
         guard let latest else { throw LyricSourceError.noLyrics }
         store(latest, for: cacheKey)
         return latest

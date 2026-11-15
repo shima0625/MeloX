@@ -227,6 +227,9 @@ nonisolated struct Song: Codable, Hashable, Identifiable {
     let musicVideoID: Int?
     let podcastMetadata: PodcastPlaybackMetadata?
     let audioAvailability: SongAudioAvailability
+    /// Set when the track belongs to a third-party catalog (QQ Music today).
+    /// NetEase tracks keep `nil` and are played through the built-in API.
+    let provider: ProviderTrackReference?
 
     var artistText: String {
         L10n.joined(
@@ -251,6 +254,7 @@ nonisolated struct Song: Codable, Hashable, Identifiable {
         case publishTime, copyright
         case musicVideoID = "mv"
         case podcastMetadata = "_meloxPodcastMetadata"
+        case provider = "_meloxProvider"
     }
 
     init(
@@ -268,7 +272,8 @@ nonisolated struct Song: Codable, Hashable, Identifiable {
         copyright: Int? = nil,
         musicVideoID: Int? = nil,
         podcastMetadata: PodcastPlaybackMetadata? = nil,
-        audioAvailability: SongAudioAvailability = .unknown
+        audioAvailability: SongAudioAvailability = .unknown,
+        provider: ProviderTrackReference? = nil
     ) {
         self.id = id
         self.name = name
@@ -285,6 +290,7 @@ nonisolated struct Song: Codable, Hashable, Identifiable {
         self.musicVideoID = musicVideoID
         self.podcastMetadata = podcastMetadata
         self.audioAvailability = audioAvailability
+        self.provider = provider
     }
 
     init(from decoder: Decoder) throws {
@@ -313,6 +319,10 @@ nonisolated struct Song: Codable, Hashable, Identifiable {
             forKey: .podcastMetadata
         )
         audioAvailability = try SongAudioAvailability(from: decoder)
+        provider = try container.decodeIfPresent(
+            ProviderTrackReference.self,
+            forKey: .provider
+        )
     }
 
     func encode(to encoder: Encoder) throws {
@@ -335,6 +345,7 @@ nonisolated struct Song: Codable, Hashable, Identifiable {
             forKey: .podcastMetadata
         )
         try audioAvailability.encode(to: encoder)
+        try container.encodeIfPresent(provider, forKey: .provider)
     }
 }
 

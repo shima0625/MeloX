@@ -5,7 +5,9 @@ struct SearchView: View {
     @Environment(PlayerStore.self) private var player
     @Environment(LibraryStore.self) private var library
     @Environment(AppSettings.self) private var settings
+    @Environment(QQMusicStore.self) private var qqMusic
 
+    @State private var source: MusicSourceKind = .netease
     @State private var query = ""
     @State private var suggestions: [String] = []
     @State private var resultCache = SearchResultCache()
@@ -33,6 +35,13 @@ struct SearchView: View {
             }
         }
         .navigationTitle("ui.navigation.search")
+        .toolbar {
+            if qqMusic.isSignedIn {
+                ToolbarItem(placement: .topBarTrailing) {
+                    sourcePicker
+                }
+            }
+        }
         .searchable(
             text: $query,
             placement: .navigationBarDrawer(displayMode: .always),
@@ -96,8 +105,12 @@ struct SearchView: View {
         } message: {
             Text(library.errorMessage ?? L10n.string("ui.common.unknown_error"))
         }
-        .task(id: SearchRequest(query: query, kind: scope)) {
-            let request = SearchRequest(query: query, kind: scope)
+        .task(id: SearchRequest(query: query, kind: scope, source: source)) {
+            let request = SearchRequest(
+                query: query,
+                kind: scope,
+                source: source
+            )
             guard completedRequest != request else { return }
             await search(request)
         }
@@ -126,9 +139,30 @@ struct SearchView: View {
     }
 
     private var availableSearchKinds: [SearchKind] {
-        SearchKind.allCases.filter {
-            $0 != .podcasts
-                || settings.isContentFeatureEnabled(.podcasts)
+        SearchKind.allCases.filter { kind in
+            guard kind != .podcasts || settings.isContentFeatureEnabled(.podcasts)
+            else { return false }
+            // Third-party sources do not serve podcasts.
+            return source == .netease || kind != .podcasts
+        }
+    }
+
+    private var availableSources: [MusicSourceKind] {
+        MusicSourceKind.allCases.filter { kind in
+            !kind.isThirdParty || qqMusic.isSignedIn
+        }
+    }
+
+    private var sourcePicker: some View {
+        Menu {
+            Picker("ui.search.source.picker", selection: $source) {
+                ForEach(availableSources) { kind in
+                    Label(kind.title, systemImage: kind.systemImage)
+                        .tag(kind)
+                }
+            }
+        } label: {
+            Label(source.title, systemImage: source.systemImage)
         }
     }
 
@@ -167,39 +201,78 @@ struct SearchView: View {
                 }
             case .albums:
                 ForEach(albums) { album in
-                    NavigationLink(value: MusicRoute.album(album)) {
-                        SearchMediaRow(
-                            title: album.name,
-                            subtitle: album.artistText,
-                            artworkURL: album.artworkURL,
-                            circular: false
-                        )
+                    if let collection = QQMusicCollection.album(album) {
+                        NavigationLink {
+                            QQMusicCollectionView(collection: collection)
+                        } label: {
+                            SearchMediaRow(
+                                title: album.name,
+                                subtitle: album.artistText,
+                                artworkURL: album.artworkURL,
+                                circular: false
+                            )
+                        }
+                    } else {
+                        NavigationLink(value: MusicRoute.album(album)) {
+                            SearchMediaRow(
+                                title: album.name,
+                                subtitle: album.artistText,
+                                artworkURL: album.artworkURL,
+                                circular: false
+                            )
+                        }
+                        .musicMatchedTransitionSource(for: MusicRoute.album(album))
                     }
-                    .musicMatchedTransitionSource(for: MusicRoute.album(album))
                 }
             case .artists:
                 ForEach(artists) { artist in
-                    NavigationLink(value: MusicRoute.artist(artist.id)) {
-                        SearchMediaRow(
-                            title: artist.name,
-                            subtitle: artist.aliases.first,
-                            artworkURL: artist.artworkURL,
-                            circular: true
-                        )
+                    if let collection = QQMusicCollection.artist(artist) {
+                        NavigationLink {
+                            QQMusicCollectionView(collection: collection)
+                        } label: {
+                            SearchMediaRow(
+                                title: artist.name,
+                                subtitle: artist.aliases.first,
+                                artworkURL: artist.artworkURL,
+                                circular: true
+                            )
+                        }
+                    } else {
+                        NavigationLink(value: MusicRoute.artist(artist.id)) {
+                            SearchMediaRow(
+                                title: artist.name,
+                                subtitle: artist.aliases.first,
+                                artworkURL: artist.artworkURL,
+                                circular: true
+                            )
+                        }
+                        .musicMatchedTransitionSource(for: MusicRoute.artist(artist.id))
                     }
-                    .musicMatchedTransitionSource(for: MusicRoute.artist(artist.id))
                 }
             case .playlists:
                 ForEach(playlists) { playlist in
-                    NavigationLink(value: MusicRoute.playlist(playlist)) {
-                        SearchMediaRow(
-                            title: playlist.name,
-                            subtitle: L10n.format("ui.common.song_count", playlist.trackCount),
-                            artworkURL: playlist.artworkURL,
-                            circular: false
-                        )
+                    if let collection = QQMusicCollection.playlist(playlist) {
+                        NavigationLink {
+                            QQMusicCollectionView(collection: collection)
+                        } label: {
+                            SearchMediaRow(
+                                title: playlist.name,
+                                subtitle: L10n.format("ui.common.song_count", playlist.trackCount),
+                                artworkURL: playlist.artworkURL,
+                                circular: false
+                            )
+                        }
+                    } else {
+                        NavigationLink(value: MusicRoute.playlist(playlist)) {
+                            SearchMediaRow(
+                                title: playlist.name,
+                                subtitle: L10n.format("ui.common.song_count", playlist.trackCount),
+                                artworkURL: playlist.artworkURL,
+                                circular: false
+                            )
+                        }
+                        .musicMatchedTransitionSource(for: MusicRoute.playlist(playlist))
                     }
-                    .musicMatchedTransitionSource(for: MusicRoute.playlist(playlist))
                 }
             case .podcasts:
                 ForEach(podcasts) { podcast in
@@ -283,6 +356,11 @@ struct SearchView: View {
             return
         }
 
+        if request.source.isThirdParty {
+            await searchProvider(request, keywords: keywords)
+            return
+        }
+
         if let link = NeteaseMusicLinkParser.parse(keywords) {
             await resolve(link, for: request)
             return
@@ -323,6 +401,44 @@ struct SearchView: View {
             return
         } catch {
             phase = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Search against a third-party provider (QQ Music), mapped onto the same
+    /// rows the NetEase results use.
+    private func searchProvider(
+        _ request: SearchRequest,
+        keywords: String
+    ) async {
+        recognizedLink = nil
+        linkedSong = nil
+        guard request.source == .qqMusic else {
+            clearResults()
+            phase = .loaded
+            completedRequest = request
+            return
+        }
+        phase = .loading
+        try? await Task.sleep(for: .milliseconds(250))
+        guard !Task.isCancelled else { return }
+        do {
+            let results = try await qqMusic.search(
+                keywords,
+                kind: request.kind
+            )
+            guard !Task.isCancelled else { return }
+            songs = results.songs
+            albums = results.albums
+            artists = results.artists
+            playlists = results.playlists
+            podcasts = []
+            phase = .loaded
+            completedRequest = request
+        } catch is CancellationError {
+            return
+        } catch {
+            phase = .failed(error.localizedDescription)
+            completedRequest = request
         }
     }
 
@@ -381,6 +497,7 @@ struct SearchView: View {
 private struct SearchRequest: Hashable {
     let query: String
     let kind: SearchKind
+    let source: MusicSourceKind
 }
 
 private struct SearchMediaRow: View {
