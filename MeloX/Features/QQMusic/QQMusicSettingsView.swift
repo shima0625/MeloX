@@ -1,11 +1,12 @@
 import SwiftUI
 
 /// QQ Music account screen: sign-in state, the library entry points and the
-/// two ways to sign in (the site's own QR login in an in-app browser, or a
-/// pasted cookie header).
+/// three ways to sign in (native QR login for QQ / WeChat, the site's desktop
+/// sign-in page in an in-app browser, or a pasted cookie header).
 struct QQMusicSettingsView: View {
     @Environment(QQMusicStore.self) private var store
 
+    @State private var showsQrLogin = false
     @State private var showsWebLogin = false
     @State private var showsCookieEntry = false
     @State private var cookieText = ""
@@ -40,6 +41,15 @@ struct QQMusicSettingsView: View {
             store.refreshSession()
             if let libraryError = store.libraryError {
                 errorMessage = libraryError
+            }
+        }
+        .sheet(isPresented: $showsQrLogin) {
+            QQMusicQRLoginSheet { cookie in
+                do {
+                    try store.signIn(cookie: cookie)
+                } catch {
+                    errorMessage = error.localizedDescription
+                }
             }
         }
         .sheet(isPresented: $showsWebLogin) {
@@ -119,6 +129,21 @@ struct QQMusicSettingsView: View {
 
     private var signInSection: some View {
         Section {
+            Button {
+                showsQrLogin = true
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("ui.qqmusic.sign_in.qr")
+                        Text("ui.qqmusic.sign_in.qr.subtitle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "qrcode.viewfinder")
+                }
+            }
+
             Button {
                 showsWebLogin = true
             } label: {
