@@ -28,7 +28,6 @@ struct QQMusicLibraryView: View {
     let kind: Kind
 
     @Environment(QQMusicStore.self) private var store
-    @State private var errorMessage: String?
 
     var body: some View {
         List {
@@ -57,7 +56,7 @@ struct QQMusicLibraryView: View {
             }
         }
         .listStyle(.plain)
-        .navigationTitle(kind.titleKey)
+        .navigationTitle(L10n.string(kind.titleKey))
         .navigationBarTitleDisplayMode(.inline)
         .overlay {
             if items.isEmpty, !store.isLoadingLibrary {
@@ -65,7 +64,7 @@ struct QQMusicLibraryView: View {
                     "ui.qqmusic.library.empty",
                     systemImage: kind.emptySystemImage,
                     description: Text(
-                        errorMessage
+                        sectionError
                             ?? L10n.string("ui.qqmusic.library.empty.description")
                     )
                 )
@@ -73,11 +72,9 @@ struct QQMusicLibraryView: View {
         }
         .task {
             await store.loadLibrary(force: true)
-            errorMessage = store.libraryError
         }
         .refreshable {
             await store.loadLibrary(force: true)
-            errorMessage = store.libraryError
         }
     }
 
@@ -86,6 +83,15 @@ struct QQMusicLibraryView: View {
         case .playlists: store.myPlaylists
         case .rankings: store.rankings
         case .recommended: store.recommendedPlaylists
+        }
+    }
+
+    /// Only this section's own failure is shown, never another section's.
+    private var sectionError: String? {
+        switch kind {
+        case .playlists: store.myPlaylistsError
+        case .rankings: store.rankingsError
+        case .recommended: store.recommendedError
         }
     }
 

@@ -243,8 +243,14 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
         let raw = data["List"]
             ?? data["list"]
             ?? data["songlists"]
-        return Self.songCards(raw, nestedKey: "basic")
-            .compactMap(Self.playlist(from:))
+        // Every card wraps the playlist twice: `{"Playlist": {"basic": …}}`.
+        return QQMusicJSON.objects(raw).compactMap { card in
+            let playlist = QQMusicJSON.dictionary(card["Playlist"])
+                .flatMap { QQMusicJSON.dictionary($0["basic"]) }
+                ?? QQMusicJSON.dictionary(card["basic"])
+                ?? card
+            return Self.playlist(from: playlist)
+        }
     }
 
     // MARK: Mapping helpers
@@ -567,6 +573,11 @@ nonisolated final class QQMusicProvider: MusicSourceProvider {
             ["imgurl", "imgUrl", "picurl", "picUrl", "logo", "cover"]
         ) ?? QQMusicJSON.dictionary(item["basic"]).flatMap {
             QQMusicJSON.firstString($0, ["picurl", "picUrl", "cover"])
+        } ?? QQMusicJSON.dictionary(item["cover"]).flatMap {
+            QQMusicJSON.firstString(
+                $0,
+                ["default_url", "medium_url", "big_url", "small_url"]
+            )
         }
         return Playlist(
             id: playlistID,
