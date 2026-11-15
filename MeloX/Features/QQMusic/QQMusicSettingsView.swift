@@ -174,6 +174,21 @@ struct QQMusicSettingsView: View {
             }
 
             NavigationLink {
+                QQMusicLibraryView(kind: .recommended)
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("ui.qqmusic.library.recommended")
+                        Text("ui.qqmusic.library.recommended.subtitle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "sparkles")
+                }
+            }
+
+            NavigationLink {
                 QQMusicLibraryView(kind: .rankings)
             } label: {
                 Label {

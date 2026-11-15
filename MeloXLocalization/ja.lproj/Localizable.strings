@@ -2225,4 +2225,5 @@
 "ui.error.qqmusic.vkey.device" = "QQミュージックがこのアカウントの再生端末を制限しています（104013）。";
 "ui.error.qqmusic.vkey.code" = "QQミュージックが再生の認可を拒否しました（%ld）。";
 "ui.settings.catalog.qq_music.keywords" = "QQミュージック|qqmusic|サードパーティ|カタログ|プレイリスト|ランキング|cookie|ログイン";
-
+"ui.qqmusic.library.recommended" = "おすすめのプレイリスト";
+"ui.qqmusic.library.recommended.subtitle" = "QQミュージックがあなた向けに選んだプレイリスト";

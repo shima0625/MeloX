@@ -2225,3 +2225,5 @@
 "ui.error.qqmusic.vkey.device" = "QQ Music limits playback devices for this account (104013).";
 "ui.error.qqmusic.vkey.code" = "QQ Music rejected playback authorization (%ld).";
 "ui.settings.catalog.qq_music.keywords" = "QQ Music|qqmusic|third-party|catalog|playlist|ranking|cookie|login";
+"ui.qqmusic.library.recommended" = "Recommended Playlists";
+"ui.qqmusic.library.recommended.subtitle" = "Playlists QQ Music suggests for you";

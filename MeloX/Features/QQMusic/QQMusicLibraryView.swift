@@ -6,11 +6,21 @@ struct QQMusicLibraryView: View {
     enum Kind: Hashable {
         case playlists
         case rankings
+        case recommended
 
         var titleKey: String {
             switch self {
             case .playlists: "ui.qqmusic.library.playlists"
             case .rankings: "ui.qqmusic.library.rankings"
+            case .recommended: "ui.qqmusic.library.recommended"
+            }
+        }
+
+        var emptySystemImage: String {
+            switch self {
+            case .playlists: "music.note.list"
+            case .rankings: "chart.bar"
+            case .recommended: "sparkles"
             }
         }
     }
@@ -53,9 +63,7 @@ struct QQMusicLibraryView: View {
             if items.isEmpty, !store.isLoadingLibrary {
                 ContentUnavailableView(
                     "ui.qqmusic.library.empty",
-                    systemImage: kind == .rankings
-                        ? "chart.bar"
-                        : "music.note.list",
+                    systemImage: kind.emptySystemImage,
                     description: Text(
                         errorMessage
                             ?? L10n.string("ui.qqmusic.library.empty.description")
@@ -77,6 +85,7 @@ struct QQMusicLibraryView: View {
         switch kind {
         case .playlists: store.myPlaylists
         case .rankings: store.rankings
+        case .recommended: store.recommendedPlaylists
         }
     }
 

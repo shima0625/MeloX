@@ -2225,3 +2225,5 @@
 "ui.error.qqmusic.vkey.device" = "QQ音乐限制了该账号的播放设备（104013）。";
 "ui.error.qqmusic.vkey.code" = "QQ音乐拒绝了播放授权（%ld）。";
 "ui.settings.catalog.qq_music.keywords" = "QQ音乐|qqmusic|第三方|曲库|歌单|排行榜|cookie|登录";
+"ui.qqmusic.library.recommended" = "推荐歌单";
+"ui.qqmusic.library.recommended.subtitle" = "QQ音乐为你推荐的歌单";
