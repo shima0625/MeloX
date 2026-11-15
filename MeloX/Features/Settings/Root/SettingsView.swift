@@ -151,6 +151,8 @@ struct SettingsView: View {
             FloatingLyricsSettingsView()
         case .developer:
             DeveloperSettingsView()
+        case .qqMusic:
+            QQMusicSettingsView()
         case .about:
             AboutView()
         }

@@ -15,6 +15,7 @@ enum SettingsRoute: Hashable {
     case floatingLyrics
     case developer
     case about
+    case qqMusic
 }
 
 struct SettingsCatalogSection: Identifiable {
@@ -145,6 +146,18 @@ enum SettingsCatalog {
                     subtitle: L10n.string("ui.settings.catalog.general.subtitle"),
                     systemImage: "gearshape",
                     keywords: L10n.keywords("ui.settings.catalog.general.keywords")
+                ),
+            ]
+        ),
+        SettingsCatalogSection(
+            title: L10n.string("ui.settings.catalog.third_party.section"),
+            items: [
+                SettingsCatalogItem(
+                    route: .qqMusic,
+                    title: L10n.string("ui.settings.catalog.qq_music.title"),
+                    subtitle: L10n.string("ui.settings.catalog.qq_music.subtitle"),
+                    systemImage: "music.note.list",
+                    keywords: L10n.keywords("ui.settings.catalog.qq_music.keywords")
                 ),
             ]
         ),

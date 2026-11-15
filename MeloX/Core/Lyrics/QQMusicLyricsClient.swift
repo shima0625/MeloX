@@ -26,7 +26,35 @@ nonisolated struct QQMusicLyricsClient: Sendable {
             await matchStore.set(searched, for: song.id)
         }
 
-        let primary = try await lyricResponse(for: match, requestsQRC: true)
+        return try await payload(for: match)
+    }
+
+    /// Lyrics for a track that already belongs to the QQ Music catalog: no
+    /// fuzzy search is needed, the song mid addresses the QRC document (with
+    /// translation and romanization) directly.
+    func lyrics(
+        forProviderTrack track: ProviderTrackReference,
+        song: LyricsSongMetadata
+    ) async throws -> QQLyricPayload {
+        let match = QQMusicTrackMatch(
+            id: track.numericID ?? 0,
+            title: song.title,
+            album: song.album,
+            artist: song.artist,
+            durationSeconds: song.durationSeconds
+        )
+        return try await payload(for: match, songMid: track.mid)
+    }
+
+    private func payload(
+        for match: QQMusicTrackMatch,
+        songMid: String? = nil
+    ) async throws -> QQLyricPayload {
+        let primary = try await lyricResponse(
+            for: match,
+            songMid: songMid,
+            requestsQRC: true
+        )
         let verbatim = primary.qrcT != 0
             ? QQMusicLyricDecoder.decode(primary.lyric)
             : nil
@@ -40,6 +68,7 @@ nonisolated struct QQMusicLyricsClient: Sendable {
         if primary.qrcT != 0,
            let fallback = try? await lyricResponse(
                 for: match,
+                songMid: songMid,
                 requestsQRC: false
            ) {
             fallbackLine = QQMusicLyricDecoder.decode(fallback.lyric)
@@ -106,6 +135,7 @@ nonisolated struct QQMusicLyricsClient: Sendable {
 
     private func lyricResponse(
         for song: QQMusicTrackMatch,
+        songMid: String? = nil,
         requestsQRC: Bool
     ) async throws -> QQLyricResponse.Data {
         let encode: (String) -> String = {
@@ -144,6 +174,7 @@ nonisolated struct QQMusicLyricsClient: Sendable {
                     "roma_t": 0,
                     "singerName": encode(song.artist),
                     "songID": song.id,
+                    "songMid": songMid ?? "",
                     "songName": encode(song.title),
                     "trans": 1,
                     "trans_t": 0,

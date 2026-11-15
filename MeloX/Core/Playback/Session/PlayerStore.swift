@@ -1217,6 +1217,14 @@ final class PlayerStore {
                     return downloadedSource
                 }
                 isUsingDownloadedSource = false
+                // Third-party catalog tracks (QQ Music today) resolve their
+                // stream through the registered provider instead of NetEase.
+                if let providerTrack = song.provider {
+                    return try await MusicSourceRegistry.shared.playbackSource(
+                        for: providerTrack,
+                        quality: api.requestedPlaybackQuality
+                    )
+                }
                 if let cachedDetailedSong {
                     return try await api.playbackSource(for: cachedDetailedSong)
                 }
@@ -1234,6 +1242,14 @@ final class PlayerStore {
     }
 
     private static func isRetryablePlaybackSourceError(_ error: Error) -> Bool {
+        if let providerError = error as? MusicSourceProviderError {
+            switch providerError {
+            case .invalidResponse, .unavailable:
+                return true
+            case .notConfigured, .loginRequired, .notFound, .playbackDenied:
+                return false
+            }
+        }
         if let apiError = error as? APIError {
             switch apiError {
             case .noPlayableSource, .emptyResponse, .invalidResponse:

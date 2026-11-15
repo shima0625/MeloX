@@ -19,6 +19,7 @@ struct MeloXApp: App {
         LyricsNotificationController
     @State private var screenAwakeCoordinator: ScreenAwakeCoordinator
     @State private var releaseNotes: AppReleaseNotesStore
+    @State private var qqMusic: QQMusicStore
     @State private var isLowPowerModeEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
 
     init() {
@@ -61,6 +62,7 @@ struct MeloXApp: App {
         let phoneWatchSync = PhoneWatchSyncService(
             settings: settings
         )
+        let qqMusic = QQMusicStore()
         let lyricService = LyricsService(api: api, settings: settings)
         let lyrics = LyricsStore(service: lyricService)
         let floatingLyrics = FloatingLyricsController(
@@ -83,6 +85,7 @@ struct MeloXApp: App {
         )
         _screenAwakeCoordinator = State(initialValue: ScreenAwakeCoordinator())
         _releaseNotes = State(initialValue: releaseNotes)
+        _qqMusic = State(initialValue: qqMusic)
     }
 
     var body: some Scene {
@@ -100,6 +103,7 @@ struct MeloXApp: App {
                 .environment(lyricsNotifications)
                 .environment(screenAwakeCoordinator)
                 .environment(releaseNotes)
+                .environment(qqMusic)
                 .environment(\.effectiveLyricsRefreshRate, effectiveLyricsRefreshRate)
                 .environment(\.locale, settings.appLanguage.locale)
                 .tint(.red)

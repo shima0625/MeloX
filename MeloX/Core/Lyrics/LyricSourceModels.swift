@@ -63,6 +63,30 @@ struct LyricsSongMetadata: Hashable, Sendable {
     let album: String
     let artist: String
     let durationSeconds: Int
+    /// Set for third-party catalog tracks, whose lyrics are fetched by the
+    /// provider's own id instead of a NetEase lookup.
+    let providerTrack: ProviderTrackReference?
+
+    var qqMusicSongMid: String? {
+        guard providerTrack?.source == .qqMusic else { return nil }
+        return providerTrack?.mid
+    }
+
+    init(
+        id: Int,
+        title: String,
+        album: String,
+        artist: String,
+        durationSeconds: Int,
+        providerTrack: ProviderTrackReference? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.album = album
+        self.artist = artist
+        self.durationSeconds = durationSeconds
+        self.providerTrack = providerTrack
+    }
 
     init(song: Song) {
         id = song.id
@@ -70,6 +94,7 @@ struct LyricsSongMetadata: Hashable, Sendable {
         album = song.album?.name ?? ""
         artist = song.artists.map(\.name).joined(separator: ",")
         durationSeconds = max(song.durationMS / 1_000, 0)
+        providerTrack = song.provider
     }
 }
 
